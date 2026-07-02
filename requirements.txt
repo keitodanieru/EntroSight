@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+torch
+torchvision
+chromadb
+httpx
+pydantic
+pydantic-settings
+aiosqlite
+pillow
+matplotlib
+numpy
+hypothesis
+pytest
+pytest-asyncio
