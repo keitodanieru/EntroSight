@@ -1,0 +1,212 @@
+[
+  {
+    "technique_id": "T1555",
+    "technique_name": "Credentials from Password Stores",
+    "family": "AgentTesla",
+    "text": "AgentTesla harvests stored credentials from web browsers, email clients, and FTP applications. It targets password stores in Chrome, Firefox, Outlook, and Thunderbird by reading local database files and registry entries. The stolen credentials are exfiltrated to attacker-controlled SMTP servers or FTP drops."
+  },
+  {
+    "technique_id": "T1056.001",
+    "technique_name": "Keylogging",
+    "family": "AgentTesla",
+    "text": "AgentTesla installs a low-level keyboard hook using SetWindowsHookEx to capture all keystrokes on the infected system. The keylogger records input across all applications and periodically transmits logs to the command-and-control server. This enables theft of credentials typed into login forms and sensitive documents."
+  },
+  {
+    "technique_id": "T1113",
+    "technique_name": "Screen Capture",
+    "family": "AgentTesla",
+    "text": "AgentTesla periodically captures screenshots of the victim's desktop using GDI+ APIs. Screenshots are taken at configurable intervals and saved as JPEG images before exfiltration. This allows attackers to observe user activity and capture information displayed on screen."
+  },
+  {
+    "technique_id": "T1071.001",
+    "technique_name": "Web Protocols",
+    "family": "AgentTesla",
+    "text": "AgentTesla exfiltrates collected data over HTTP/HTTPS POST requests to web panels or Telegram bot APIs. It formats stolen credentials and keylog data into structured messages. The use of legitimate web protocols helps the traffic blend with normal browsing activity."
+  },
+  {
+    "technique_id": "T1547.001",
+    "technique_name": "Registry Run Keys / Startup Folder",
+    "family": "AgentTesla",
+    "text": "AgentTesla establishes persistence by adding entries to the HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run registry key. Some variants also copy themselves to the Startup folder. This ensures the keylogger and credential stealer restart after system reboots."
+  },
+  {
+    "technique_id": "T1219",
+    "technique_name": "Remote Access Software",
+    "family": "Remcos",
+    "text": "Remcos is a commercial remote access tool repurposed for malicious control of infected systems. It provides full remote desktop access, file management, and command execution capabilities. Operators use it to maintain persistent interactive access to compromised endpoints."
+  },
+  {
+    "technique_id": "T1055",
+    "technique_name": "Process Injection",
+    "family": "Remcos",
+    "text": "Remcos injects its payload into legitimate Windows processes such as explorer.exe or svchost.exe using process hollowing. The malware creates a suspended process, unmaps its memory, and writes its own code into the address space. This technique evades process-based detection and inherits the trust level of the host process."
+  },
+  {
+    "technique_id": "T1056.001",
+    "technique_name": "Keylogging",
+    "family": "Remcos",
+    "text": "Remcos includes a built-in keylogger that captures all keyboard input on the compromised system. Keystrokes are logged with window titles for context and stored locally before transmission. The operator can enable or disable keylogging remotely through the C2 channel."
+  },
+  {
+    "technique_id": "T1571",
+    "technique_name": "Non-Standard Port",
+    "family": "Remcos",
+    "text": "Remcos communicates with its command-and-control server over non-standard TCP ports, often using ports like 2404, 7832, or other uncommon values. The traffic is encrypted with RC4 to avoid content inspection. Using non-standard ports helps evade firewall rules configured for common services."
+  },
+  {
+    "technique_id": "T1112",
+    "technique_name": "Modify Registry",
+    "family": "Remcos",
+    "text": "Remcos modifies Windows registry keys to store its configuration data and establish persistence. Configuration values including C2 addresses and encryption keys are stored in encoded form under HKCU registry hives. The malware also disables security features by modifying registry-based policies."
+  },
+  {
+    "technique_id": "T1059.001",
+    "technique_name": "PowerShell",
+    "family": "DCRat",
+    "text": "DCRat leverages PowerShell for initial execution and post-exploitation activities. It downloads and executes additional modules using encoded PowerShell commands. The malware uses PowerShell's reflection capabilities to load .NET assemblies directly into memory without touching disk."
+  },
+  {
+    "technique_id": "T1125",
+    "technique_name": "Video Capture",
+    "family": "DCRat",
+    "text": "DCRat can activate the victim's webcam to capture video and still images. The captured media is stored temporarily before being uploaded to the attacker's server. This surveillance capability is part of DCRat's modular plugin architecture."
+  },
+  {
+    "technique_id": "T1496",
+    "technique_name": "Resource Hijacking",
+    "family": "DCRat",
+    "text": "DCRat includes a cryptocurrency mining plugin that hijacks CPU and GPU resources on infected systems. The miner runs as a low-priority process to avoid detection through performance degradation. Mining proceeds are directed to attacker-controlled wallet addresses."
+  },
+  {
+    "technique_id": "T1055.012",
+    "technique_name": "Process Hollowing",
+    "family": "DCRat",
+    "text": "DCRat uses process hollowing to inject its payload into legitimate Windows processes. It creates a suspended instance of a trusted executable, replaces its memory contents with malicious code, and resumes execution. This allows DCRat to operate under the guise of a legitimate process."
+  },
+  {
+    "technique_id": "T1573.001",
+    "technique_name": "Symmetric Cryptography",
+    "family": "DCRat",
+    "text": "DCRat encrypts its command-and-control communications using AES symmetric encryption. The encryption key is derived from a hardcoded seed embedded in the malware configuration. This prevents network monitoring tools from inspecting the content of C2 traffic."
+  },
+  {
+    "technique_id": "T1095",
+    "technique_name": "Non-Application Layer Protocol",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT communicates with its C2 server using raw TCP sockets with custom binary protocols. The communication is encrypted using a certificate-based TLS connection or AES encryption. This non-standard protocol makes signature-based network detection difficult."
+  },
+  {
+    "technique_id": "T1059.001",
+    "technique_name": "PowerShell",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT delivery chains frequently use PowerShell scripts for initial execution and payload staging. The scripts download encrypted payloads, decode them in memory, and use reflection to load the .NET RAT assembly. Multi-stage PowerShell execution helps evade static file scanning."
+  },
+  {
+    "technique_id": "T1547.001",
+    "technique_name": "Registry Run Keys / Startup Folder",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT persists by creating scheduled tasks and adding registry run key entries pointing to its executable or a loader script. It targets both HKCU and HKLM run keys depending on available privileges. The persistence mechanism activates the RAT on every user logon."
+  },
+  {
+    "technique_id": "T1056.001",
+    "technique_name": "Keylogging",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT includes a keylogging module that hooks keyboard input events to capture user keystrokes. Logged data is buffered locally and transmitted to the C2 server at regular intervals. The keylogger records the active window title alongside captured text for context."
+  },
+  {
+    "technique_id": "T1497",
+    "technique_name": "Virtualization/Sandbox Evasion",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT checks for virtual machine artifacts, debugger presence, and sandbox indicators before executing its payload. It inspects hardware identifiers, checks for known VM MAC address prefixes, and queries WMI for virtualization strings. If a sandbox is detected, the malware exits or enters a dormant loop."
+  },
+  {
+    "technique_id": "T1555.003",
+    "technique_name": "Credentials from Web Browsers",
+    "family": "RedLineStealer",
+    "text": "RedLineStealer extracts saved passwords, cookies, and autofill data from Chromium-based and Gecko-based web browsers. It directly reads SQLite databases and decrypts credential entries using the Windows DPAPI. Stolen browser data is a primary target for subsequent credential stuffing attacks."
+  },
+  {
+    "technique_id": "T1012",
+    "technique_name": "Query Registry",
+    "family": "RedLineStealer",
+    "text": "RedLineStealer queries the Windows registry to gather system information including installed software, hardware identifiers, and security product details. This reconnaissance data is packaged alongside stolen credentials to build a complete victim profile. The registry queries help identify high-value targets and installed cryptocurrency wallets."
+  },
+  {
+    "technique_id": "T1005",
+    "technique_name": "Data from Local System",
+    "family": "RedLineStealer",
+    "text": "RedLineStealer searches for and collects cryptocurrency wallet files, VPN configurations, and messaging application databases from predefined paths. It targets wallets for Bitcoin, Ethereum, and other cryptocurrencies by scanning known installation directories. Collected files are compressed and exfiltrated alongside browser credentials."
+  },
+  {
+    "technique_id": "T1071.001",
+    "technique_name": "Web Protocols",
+    "family": "RedLineStealer",
+    "text": "RedLineStealer exfiltrates stolen data to its C2 panel over HTTPS POST requests with Base64-encoded payloads. The communication uses a custom binary serialization format for structured data transmission. C2 servers are typically hosted on bulletproof infrastructure with frequently rotating domains."
+  },
+  {
+    "technique_id": "T1082",
+    "technique_name": "System Information Discovery",
+    "family": "RedLineStealer",
+    "text": "RedLineStealer collects detailed system fingerprint data including OS version, CPU model, RAM size, GPU info, screen resolution, and installed languages. This information is sent to the C2 server as part of the initial beacon to identify and categorize victims. The fingerprint helps operators prioritize high-value targets."
+  },
+  {
+    "technique_id": "T1055",
+    "technique_name": "Process Injection",
+    "family": "Formbook",
+    "text": "Formbook injects its code into multiple running processes using a technique called process hollowing and RunPE. It targets explorer.exe for persistence and web browsers for form data interception. The injection chain uses ntdll native API calls to evade user-mode API monitoring hooks."
+  },
+  {
+    "technique_id": "T1056.004",
+    "technique_name": "Credential API Hooking",
+    "family": "Formbook",
+    "text": "Formbook hooks network-related APIs in web browsers to intercept form submissions containing credentials and payment data. It installs inline hooks on functions like HttpSendRequest and PR_Write to capture data before TLS encryption. This technique captures credentials even on HTTPS-protected websites."
+  },
+  {
+    "technique_id": "T1497",
+    "technique_name": "Virtualization/Sandbox Evasion",
+    "family": "Formbook",
+    "text": "Formbook employs extensive anti-analysis techniques including checks for debuggers, virtual machines, and malware analysis tools. It hashes running process names and compares them against a blacklist of known analysis tools. If sandboxing is detected, it redirects execution to benign decoy code paths."
+  },
+  {
+    "technique_id": "T1027",
+    "technique_name": "Obfuscated Files or Information",
+    "family": "Formbook",
+    "text": "Formbook heavily obfuscates its code using string encryption, control flow flattening, and junk code insertion. Critical strings like API names and C2 URLs are encrypted with custom algorithms and decrypted only at runtime. Each build uses a unique obfuscation seed making static signatures unreliable."
+  },
+  {
+    "technique_id": "T1185",
+    "technique_name": "Browser Session Hijacking",
+    "family": "Formbook",
+    "text": "Formbook can hijack active browser sessions by injecting into browser processes and manipulating web content. It captures clipboard data, takes screenshots, and can modify web page content displayed to the user. This enables both credential theft and manipulation of banking transactions."
+  },
+  {
+    "technique_id": "T1036",
+    "technique_name": "Masquerading",
+    "family": "Benign",
+    "text": "Legitimate software uses standard naming conventions and proper code signing certificates issued by recognized certificate authorities. Benign executables have consistent metadata including valid company names, version information, and appropriate file descriptions. The absence of name spoofing or metadata inconsistencies is characteristic of clean software."
+  },
+  {
+    "technique_id": "T1007",
+    "technique_name": "System Service Discovery",
+    "family": "Benign",
+    "text": "Legitimate system administration and monitoring tools query running services for health checks and status reporting. Clean software interacts with the Service Control Manager through documented APIs with appropriate privileges. These operations are bounded, logged, and performed with user consent or administrative authorization."
+  },
+  {
+    "technique_id": "T1083",
+    "technique_name": "File and Directory Discovery",
+    "family": "Benign",
+    "text": "Clean applications access file systems through standard APIs with user-initiated actions such as file open dialogs and project workspace scanning. Benign file enumeration is typically scoped to user-designated directories rather than searching for credential stores or sensitive data paths. Normal software does not systematically scan for browser databases or cryptocurrency wallets."
+  },
+  {
+    "technique_id": "T1518",
+    "technique_name": "Software Discovery",
+    "family": "Benign",
+    "text": "Legitimate software may query installed programs for compatibility checks, dependency verification, or update management. These queries are transparent, well-documented, and serve a clear functional purpose for the user. Unlike malware reconnaissance, benign software discovery does not attempt to identify or disable security products."
+  },
+  {
+    "technique_id": "T1204",
+    "technique_name": "User Execution",
+    "family": "Benign",
+    "text": "Benign software requires explicit user consent for installation and execution through standard operating system prompts. Clean applications display UAC dialogs, license agreements, and clear installation wizards. They do not employ social engineering, exploit execution, or bypass user interaction requirements to achieve code execution."
+  }
+]
