@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}EntroSight — File rejected{% endblock %}
+
+{% block content %}
+<section class="error-block" role="alert" aria-labelledby="error-heading">
+  <span class="eyebrow eyebrow--accent">Rejected</span>
+  <h1 id="error-heading" class="error-title">Not a valid PE file.</h1>
+  <p class="lead">{{ error_message | default("The uploaded file could not be analyzed.") }}</p>
+
+  <div class="error-detail">
+    {% if filename %}
+    <div class="error-row">
+      <span class="error-row__label">File</span>
+      <span class="error-row__value">{{ filename }}</span>
+    </div>
+    {% endif %}
+
+    {% if first_bytes %}
+    <div class="error-detail__section">
+      <div class="error-row">
+        <span class="error-row__label">First bytes</span>
+        <span class="error-row__value error-row__value--accent">{{ first_bytes }}</span>
+      </div>
+      <div class="error-row">
+        <span class="error-row__label">Expected</span>
+        <span class="error-row__value error-row__value--ok">4D 5A&nbsp;("MZ")</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <a href="/" class="btn btn--primary error-block__action" aria-label="Try another file">Try another file</a>
+</section>
+{% endblock %}

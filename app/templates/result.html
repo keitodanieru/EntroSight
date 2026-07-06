@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}EntroSight — {{ r.filename }}{% endblock %}
+
+{% block content %}
+{# --------------------------------------------------------------------------
+   Result page. Expected context (supplied by GET /scan/{scan_id}):
+     r              -> ScanRecord (id, sha256, filename, predicted_label,
+                       confidence [0..1], explanation, heatmap_path,
+                       timestamp, total_time_ms). May also carry heatmap_url.
+   Optional context (guarded — template renders without them):
+     techniques     -> list of {technique_id, technique_name, tactic}
+     heatmap_stats  -> {mean_entropy, high_entropy_pct, structure}
+     file_size_human, timestamp_str, family_kind
+--------------------------------------------------------------------------- #}
+
+{% set is_benign = (r.predicted_label == "Benign") %}
+{% set confidence_pct = (r.confidence * 100) if r.confidence is not none else 0 %}
+{% set heatmap_src = (r.heatmap_url if r.heatmap_url is defined and r.heatmap_url
+                      else (r.heatmap_path if r.heatmap_path is defined else "")) %}
+
+<article class="result-view">
+
+  <div class="result-header">
+    <div>
+      <span class="eyebrow">Result</span>
+      <h1 class="result-title">{{ r.filename }}</h1>
+    </div>
+    <div class="result-header__actions">
+      <a href="/" class="btn btn--primary">New scan</a>
+      <a href="/history" class="btn btn--ghost">History</a>
+    </div>
+  </div>
+
+  <div class="split-grid">
+    {# ---------------- Verdict panel ---------------- #}
+    <div>
+      <span class="eyebrow">Classification</span>
+      <div>
+        <span class="verdict-badge {{ 'verdict-badge--benign' if is_benign else 'verdict-badge--malicious' }}">
+          {{ "Benign" if is_benign else "Malicious" }}
+        </span>
+      </div>
+      <h2 class="family-name">{{ r.predicted_label }}</h2>
+      {% if family_kind is defined and family_kind %}
+      <span class="family-kind">{{ family_kind }}</span>
+      {% endif %}
+
+      <div style="margin-top:32px">
+        <span class="eyebrow">Confidence</span>
+        <div class="confidence-value">
+          <span class="confidence-value__num">{{ confidence_pct | round(1) }}</span>
+          <span class="confidence-value__pct">%</span>
+        </div>
+        <div class="meter">
+          <div class="meter__fill" style="width:{{ confidence_pct }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    {# ---------------- Heatmap panel ---------------- #}
+    <div class="panel">
+      <span class="eyebrow">Byte-entropy map</span>
+      {% if heatmap_src %}
+      <img
+        class="heatmap-canvas"
+        src="{{ heatmap_src }}"
+        alt="Byte-entropy heatmap of the analyzed file; brighter red blocks indicate high-entropy, likely packed or encrypted regions."
+      />
+      {% endif %}
+
+      <div class="heatmap-legend">
+        <span class="heatmap-legend__label">LOW</span>
+        <div class="heatmap-legend__bar" aria-hidden="true"></div>
+        <span class="heatmap-legend__label">HIGH</span>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat__label">Mean entropy</span>
+          <span class="stat__value">
+            {% if heatmap_stats is defined and heatmap_stats and heatmap_stats.mean_entropy is not none %}
+              {{ heatmap_stats.mean_entropy }} <span class="unit">bits/byte</span>
+            {% else %}—{% endif %}
+          </span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">High-entropy</span>
+          <span class="stat__value">
+            {% if heatmap_stats is defined and heatmap_stats and heatmap_stats.high_entropy_pct is not none %}
+              {{ heatmap_stats.high_entropy_pct }}
+            {% else %}—{% endif %}
+          </span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">Structure</span>
+          <span class="stat__value">
+            {% if heatmap_stats is defined and heatmap_stats and heatmap_stats.structure %}
+              {{ heatmap_stats.structure }}
+            {% else %}—{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split-grid split-grid--gap-lg">
+    {# ---------------- MITRE ATT&CK techniques ---------------- #}
+    <div>
+      <span class="eyebrow">MITRE ATT&amp;CK context</span>
+      {% if techniques %}
+      <div class="tech-list">
+        {% for t in techniques %}
+        <div class="tech">
+          <span class="tech__id">{{ t.technique_id }}</span>
+          <span class="tech__name">{{ t.technique_name }}</span>
+          <span class="tech__tactic">{{ t.tactic if t.tactic is defined and t.tactic else "" }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif is_benign %}
+      <p class="lead" style="margin-top:16px">No ATT&amp;CK techniques are associated with a benign classification.</p>
+      {% else %}
+      <p class="lead" style="margin-top:16px">No ATT&amp;CK techniques were retrieved for this sample.</p>
+      {% endif %}
+    </div>
+
+    {# ---------------- Explanation ---------------- #}
+    <div>
+      <span class="eyebrow">Explanation</span>
+      <p class="explanation">{{ r.explanation }}</p>
+      <span class="explanation-footer">Generated locally · grounded in retrieved MITRE ATT&amp;CK context</span>
+    </div>
+  </div>
+
+  {# ---------------- SHA-256 ---------------- #}
+  <div class="hash-panel">
+    <span class="eyebrow">SHA-256</span>
+    <div class="hash-panel__value">{{ r.sha256 }}</div>
+  </div>
+
+  {# ---------------- Metadata grid ---------------- #}
+  <div class="grid-cards grid-cards--meta">
+    <div class="card card--meta">
+      <span class="card__label">Size</span>
+      <span class="card__value">
+        {% if file_size_human is defined and file_size_human %}{{ file_size_human }}{% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="card card--meta">
+      <span class="card__label">Type</span>
+      <span class="card__value">
+        {% if "." in r.filename %}.{{ r.filename.rsplit(".", 1)[-1] | lower }}{% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="card card--meta">
+      <span class="card__label">Analyzed</span>
+      <span class="card__value">
+        {% if timestamp_str is defined and timestamp_str %}
+          {{ timestamp_str }}
+        {% elif r.timestamp is defined and r.timestamp %}
+          {{ r.timestamp.strftime("%Y-%m-%d %H:%M UTC") if r.timestamp.strftime is defined else r.timestamp }}
+        {% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="card card--meta">
+      <span class="card__label">Binary</span>
+      <span class="card__value card__value--ok">Discarded</span>
+    </div>
+  </div>
+
+</article>
+{% endblock %}

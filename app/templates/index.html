@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}EntroSight — Analyze a PE file{% endblock %}
+
+{% block content %}
+<section class="upload-view" aria-labelledby="upload-heading">
+  <span class="eyebrow">Local PE analysis · no telemetry</span>
+  <h1 id="upload-heading" class="hero-title">Classify a Windows executable, and understand why.</h1>
+  <p class="hero-desc">
+    Upload a PE file. EntroSight renders a byte-entropy heatmap, a fine-tuned
+    ResNet-50 predicts the malware family, and a local model explains the verdict
+    against MITRE ATT&amp;CK — nothing leaves this machine.
+  </p>
+
+  <form
+    id="upload-form"
+    class="upload-form"
+    hx-post="/api/scan"
+    hx-encoding="multipart/form-data"
+    hx-target="#result-container"
+    hx-swap="innerHTML"
+    hx-trigger="submit, change from:#file-input"
+  >
+    <label
+      id="drop-zone"
+      class="drop-zone"
+      for="file-input"
+      aria-label="Upload a PE file. Accepts .exe, .dll and .sys. Press Enter to browse, or drag a binary onto this area."
+    >
+      <span class="drop-zone__label">Drop zone</span>
+      <span class="drop-zone__title">Drop a binary here, or click to browse</span>
+      <span class="drop-zone__hint">
+        Accepted: .exe · .dll · .sys — maximum 50 MB. The MZ header is validated
+        before any processing begins.
+      </span>
+      <span class="drop-zone__cmd">$ analyze --local --model resnet50 &lt;file&gt;</span>
+      <div class="drop-zone__overlay" aria-hidden="true">
+        <span class="drop-zone__overlay-label">Release to analyze</span>
+      </div>
+    </label>
+
+    <input
+      type="file"
+      id="file-input"
+      name="file"
+      class="visually-hidden"
+      accept=".exe,.dll,.sys"
+      required
+    />
+
+    <button type="submit" class="upload-submit">Analyze binary</button>
+  </form>
+
+  <ol class="pipeline-grid" aria-label="Analysis pipeline steps">
+    <li class="pipeline-step">
+      <span class="pipeline-step__num">01</span>
+      <span class="pipeline-step__name">Validate</span>
+      <span class="pipeline-step__desc">MZ header &amp; size</span>
+    </li>
+    <li class="pipeline-step">
+      <span class="pipeline-step__num">02</span>
+      <span class="pipeline-step__name">Visualize</span>
+      <span class="pipeline-step__desc">Byte-entropy map</span>
+    </li>
+    <li class="pipeline-step">
+      <span class="pipeline-step__num">03</span>
+      <span class="pipeline-step__name">Classify</span>
+      <span class="pipeline-step__desc">Fine-tuned ResNet-50</span>
+    </li>
+    <li class="pipeline-step">
+      <span class="pipeline-step__num">04</span>
+      <span class="pipeline-step__name">Contextualize</span>
+      <span class="pipeline-step__desc">MITRE ATT&amp;CK lookup</span>
+    </li>
+    <li class="pipeline-step">
+      <span class="pipeline-step__num">05</span>
+      <span class="pipeline-step__name">Explain</span>
+      <span class="pipeline-step__desc">Local LLM, plain language</span>
+    </li>
+  </ol>
+
+  <div id="result-container" aria-live="polite"></div>
+</section>
+
+<script>
+  // Progressive enhancement: drag-and-drop visual state + file hand-off to the
+  // hidden <input>. Styling lives in style.css (.drop-zone--dragging); this only
+  // wires native drag events, since HTMX cannot capture dropped files on its own.
+  (function () {
+    var dropZone = document.getElementById("drop-zone");
+    var fileInput = document.getElementById("file-input");
+    if (!dropZone || !fileInput) return;
+
+    function stop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ["dragenter", "dragover"].forEach(function (evt) {
+      dropZone.addEventListener(evt, function (e) {
+        stop(e);
+        dropZone.classList.add("drop-zone--dragging");
+      });
+    });
+
+    ["dragleave", "dragend"].forEach(function (evt) {
+      dropZone.addEventListener(evt, function (e) {
+        stop(e);
+        dropZone.classList.remove("drop-zone--dragging");
+      });
+    });
+
+    dropZone.addEventListener("drop", function (e) {
+      stop(e);
+      dropZone.classList.remove("drop-zone--dragging");
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        // Fire change so the HTMX-bound form submits.
+        fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+  })();
+</script>
+{% endblock %}

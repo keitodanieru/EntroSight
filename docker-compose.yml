@@ -1,0 +1,84 @@
+# EntroSight — local-only deployment
+# Two long-running services (app + ollama) plus a one-shot init service that
+# pulls the Mistral model into Ollama on first run.
+services:
+  # FastAPI application container
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: entrosight-app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist generated runtime data (chromadb, heatmaps, scans.db) and
+      # allow the teammate's model checkpoint to be mounted from the host.
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      # All settings use the ENTROSIGHT_ prefix (see app/config.py).
+      # Values fall back to the config defaults when the .env entry is unset.
+      ENTROSIGHT_MODEL_CHECKPOINT_PATH: ${ENTROSIGHT_MODEL_CHECKPOINT_PATH:-models/resnet50_malware.pth}
+      ENTROSIGHT_MAX_FILE_SIZE_MB: ${ENTROSIGHT_MAX_FILE_SIZE_MB:-50}
+      ENTROSIGHT_ENTROPY_BLOCK_SIZE: ${ENTROSIGHT_ENTROPY_BLOCK_SIZE:-256}
+      ENTROSIGHT_HEATMAP_IMAGE_SIZE: ${ENTROSIGHT_HEATMAP_IMAGE_SIZE:-256}
+      ENTROSIGHT_CHROMADB_PATH: ${ENTROSIGHT_CHROMADB_PATH:-data/chromadb}
+      ENTROSIGHT_RAG_COLLECTION_NAME: ${ENTROSIGHT_RAG_COLLECTION_NAME:-mitre_attack}
+      ENTROSIGHT_RAG_TOP_K: ${ENTROSIGHT_RAG_TOP_K:-5}
+      ENTROSIGHT_OLLAMA_BASE_URL: ${ENTROSIGHT_OLLAMA_BASE_URL:-http://ollama:11434}
+      ENTROSIGHT_OLLAMA_MODEL: ${ENTROSIGHT_OLLAMA_MODEL:-mistral}
+      ENTROSIGHT_EXPLANATION_MAX_TOKENS: ${ENTROSIGHT_EXPLANATION_MAX_TOKENS:-512}
+      ENTROSIGHT_OLLAMA_TIMEOUT_SECONDS: ${ENTROSIGHT_OLLAMA_TIMEOUT_SECONDS:-60}
+      ENTROSIGHT_DATABASE_PATH: ${ENTROSIGHT_DATABASE_PATH:-data/scans.db}
+      ENTROSIGHT_HEATMAP_STORAGE_DIR: ${ENTROSIGHT_HEATMAP_STORAGE_DIR:-data/heatmaps}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    healthcheck:
+      # Hit the FastAPI app; Python is always present in the image so we avoid
+      # depending on curl/wget being installed.
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # Ollama LLM container
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      # `ollama list` succeeds only once the server is accepting requests.
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # One-shot init: pulls the configured model into Ollama on first run, then
+  # exits. The app waits for this to complete successfully before starting.
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama-models:/root/.ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      ENTROSIGHT_OLLAMA_MODEL: ${ENTROSIGHT_OLLAMA_MODEL:-mistral}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'ollama pull "${ENTROSIGHT_OLLAMA_MODEL:-mistral}"'
+    restart: "no"
+
+volumes:
+  # Named volume so pulled models survive container restarts.
+  ollama-models:

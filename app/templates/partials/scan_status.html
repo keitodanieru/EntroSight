@@ -1,0 +1,98 @@
+{#
+  scan_status.html — HTMX polling partial for an in-progress scan.
+
+  This is a FRAGMENT (it does NOT extend base.html). It is rendered into
+  #result-container after the upload POST and then polls itself.
+
+  Expected context variables (passed by the /api/scan/{scan_id}/status route):
+    scan_id        (str)          — the scan UUID; used to build the poll URL.
+    status         (str)          — "pending" | "processing" | "complete" | "error".
+    progress_stage (str | None)   — "validating" | "classifying" | "explaining".
+                                    May be None early in the pipeline.
+    filename       (str | None)   — original uploaded file name (display only).
+    error_message  (str | None)   — populated only when status == "error".
+
+  Polling behaviour:
+    - While the scan is running, the root element polls every 2s and replaces
+      itself (hx-swap="outerHTML").
+    - When status is terminal ("complete" or "error"), hx-trigger is omitted so
+      polling stops, and terminal content is rendered instead of the progress UI.
+#}
+{% set is_terminal = status in ['complete', 'error'] %}
+{#
+  Per-step state for the 5-stage pipeline
+  (Validate → Visualize → Classify → Contextualize → Explain), derived from
+  progress_stage. Each entry is one of: "done" | "active" | "pending".
+#}
+{% set stage_states = {
+  'validating':  ['active',  'pending', 'pending', 'pending', 'pending'],
+  'classifying': ['done',    'active',  'active',  'pending', 'pending'],
+  'explaining':  ['done',    'done',    'done',    'active',  'active'],
+} %}
+{% if status == 'complete' %}
+  {% set states = ['done', 'done', 'done', 'done', 'done'] %}
+{% elif progress_stage in stage_states %}
+  {% set states = stage_states[progress_stage] %}
+{% else %}
+  {% set states = ['pending', 'pending', 'pending', 'pending', 'pending'] %}
+{% endif %}
+{% set step_labels = ['Validate', 'Visualize', 'Classify', 'Contextualize', 'Explain'] %}
+<div
+  id="scan-status"
+  class="fade-in"
+  role="status"
+  aria-live="polite"
+  aria-busy="{{ 'false' if is_terminal else 'true' }}"
+  hx-get="/api/scan/{{ scan_id }}/status"
+  {% if not is_terminal %}hx-trigger="every 2s"{% endif %}
+  hx-swap="outerHTML"
+>
+  {% if status == 'error' %}
+  {# ---------- Terminal: error (polling stopped) ---------- #}
+  <span class="eyebrow eyebrow--accent">Scan failed</span>
+  <h2 class="heading-section">{{ filename | default('Uploaded file', true) }}</h2>
+  <div class="panel" role="alert">
+    <span class="mono-note">{{ error_message | default('The scan could not be completed.', true) }}</span>
+  </div>
+
+  {% elif status == 'complete' %}
+  {# ---------- Terminal: complete (polling stopped) ---------- #}
+  <span class="eyebrow eyebrow--accent">Analysis complete</span>
+  <h2 class="heading-section">{{ filename | default('Uploaded file', true) }}</h2>
+  <span class="mono-note">Classification finished · rendering results</span>
+  <div class="analyze-grid">
+    <div class="scan-preview" aria-hidden="true">
+      <div class="scan-preview__line"></div>
+    </div>
+    <div class="step-list">
+      {% for label in step_labels %}
+      {% set st = states[loop.index0] %}
+      <div class="step">
+        <span class="step__marker step__marker--{{ st }}" aria-hidden="true"></span>
+        <span class="step__label{% if st == 'done' %} step__label--done{% elif st == 'active' %} step__label--active{% endif %}">{{ label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% else %}
+  {# ---------- In progress: pending / processing (polling active) ---------- #}
+  <span class="eyebrow eyebrow--accent">Analyzing</span>
+  <h2 class="heading-section">{{ filename | default('Uploaded file', true) }}</h2>
+  <span class="mono-note">Pipeline running locally</span>
+  <div class="analyze-grid">
+    <div class="scan-preview" aria-hidden="true">
+      <div class="scan-preview__line"></div>
+    </div>
+    <div class="step-list">
+      {% for label in step_labels %}
+      {% set st = states[loop.index0] %}
+      <div class="step">
+        <span class="step__marker step__marker--{{ st }}" aria-hidden="true"></span>
+        <span class="step__label{% if st == 'done' %} step__label--done{% elif st == 'active' %} step__label--active{% endif %}">{{ label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>

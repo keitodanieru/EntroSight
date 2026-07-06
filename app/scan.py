@@ -62,16 +62,21 @@ class AppComponents:
 _scan_status_store: dict[str, dict[str, Any]] = {}
 
 
-def register_scan(scan_id: str) -> None:
+def register_scan(scan_id: str, filename: str | None = None) -> None:
     """Register a new scan with ``pending`` status.
 
     Should be called before the background task is launched so that the
     first status poll never hits a missing scan_id.
+
+    Args:
+        scan_id: Unique scan identifier.
+        filename: Original uploaded filename, stored for display in the UI.
     """
     _scan_status_store[scan_id] = {
         "scan_id": scan_id,
         "status": STATUS_PENDING,
         "progress_stage": None,
+        "filename": filename,
         "result": None,
         "error_message": None,
     }
@@ -99,6 +104,7 @@ def update_scan_status(
             "scan_id": scan_id,
             "status": STATUS_PENDING,
             "progress_stage": None,
+            "filename": None,
             "result": None,
             "error_message": None,
         },

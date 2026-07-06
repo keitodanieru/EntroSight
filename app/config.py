@@ -33,6 +33,16 @@ class AppSettings(BaseSettings):
     ollama_model: str = "mistral"
     explanation_max_tokens: int = 512
     ollama_timeout_seconds: int = 60
+    # When true, the app will try to start a local `ollama serve` process on
+    # startup if the configured Ollama endpoint is not already reachable, and
+    # pull the configured model. Intended for native (non-Docker) runs; in the
+    # Docker stack the separate ollama container serves this role, so the app
+    # simply detects it as already-up and skips spawning.
+    ollama_autostart: bool = True
+    # Seconds to wait for a spawned `ollama serve` to become reachable.
+    ollama_startup_timeout_seconds: int = 30
+    # When true, pull the configured model on startup if it isn't present.
+    ollama_auto_pull_model: bool = True
 
     # Database settings
     database_path: str = "data/scans.db"

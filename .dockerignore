@@ -1,0 +1,33 @@
+# Version control
+.git
+.gitignore
+
+# Kiro specs / steering
+.kiro
+
+# Python caches and virtual envs
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Test / tooling caches
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Generated runtime data (created inside the image / mounted at runtime)
+data/chromadb/
+data/heatmaps/
+data/scans.db
+
+# Docs / misc
+*.md
