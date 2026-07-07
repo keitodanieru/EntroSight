@@ -14,11 +14,11 @@
   --bg-shimmer-2: #171d21;
 
   --text: #e6eaec;
-  --text-muted: #c3c9cc;
-  --text-dim: #9aa1a6;
-  --text-dimmer: #8b9398;
-  --text-faint: #5e666b;
-  --text-fainter: #4a5155;
+  --text-muted: #d0d5d8;
+  --text-dim: #b5bcc1;
+  --text-dimmer: #a8b0b5;
+  --text-faint: #8b9398;
+  --text-fainter: #6e7679;
 
   --accent: #e5484d;
   --accent-hover: #f05159;
@@ -131,10 +131,10 @@ button { font-family: inherit; }
 
 .brand__tag {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
   align-self: center;
   margin-left: 1px;
 }
@@ -149,13 +149,13 @@ button { font-family: inherit; }
 .nav-link {
   position: relative;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 8px 12px;
   background: transparent;
   border: none;
-  color: #b8bfc3;
+  color: #c8cfd3;
   cursor: pointer;
   text-decoration: none;
   transition: color 0.15s;
@@ -212,18 +212,18 @@ button { font-family: inherit; }
 
 .site-footer__text {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.08em;
-  color: var(--text-fainter);
+  color: var(--text-dimmer);
 }
 
 /* ---------- Typography helpers ---------- */
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
 }
 
 .eyebrow--accent { color: var(--accent); }
@@ -252,17 +252,17 @@ button { font-family: inherit; }
 
 .lead {
   font-family: var(--font-sans);
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.6;
-  color: var(--text-dim);
+  color: var(--text-muted);
   max-width: 60ch;
   margin: 0 0 40px;
 }
 
 .mono-note {
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-faint);
+  font-size: 13px;
+  color: var(--text-dimmer);
 }
 
 /* ---------- Buttons ---------- */
@@ -327,13 +327,16 @@ button { font-family: inherit; }
   letter-spacing: -0.4px;
 }
 
-.drop-zone__hint { font-size: 15px; color: var(--text-dimmer); }
+.drop-zone__hint { font-size: 16px; color: var(--text-muted); }
 
-.drop-zone__cmd {
+.drop-zone__selected {
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-faint);
-  margin-top: 2px;
+  font-size: 13px;
+  color: var(--success);
+  padding: 8px 12px;
+  background: rgba(77, 182, 160, 0.12);
+  border: 1px solid rgba(77, 182, 160, 0.25);
+  margin-top: 6px;
 }
 
 .drop-zone__overlay {
@@ -398,16 +401,16 @@ button { font-family: inherit; }
 
 .card__sub {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-faint);
+  font-size: 12px;
+  color: var(--text-dimmer);
 }
 
 .card__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
 }
 
 .card__value {
@@ -480,9 +483,9 @@ button { font-family: inherit; }
 
 .step__label {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.02em;
-  color: var(--text-dimmer);
+  color: var(--text-muted);
 }
 
 .step__label--done { color: var(--text); }
@@ -539,8 +542,8 @@ button { font-family: inherit; }
 
 .family-kind {
   font-family: var(--font-sans);
-  font-size: 15px;
-  color: var(--text-dimmer);
+  font-size: 16px;
+  color: var(--text-muted);
 }
 
 .confidence-value {
@@ -562,7 +565,7 @@ button { font-family: inherit; }
 .confidence-value__pct {
   font-family: var(--font-serif);
   font-size: 30px;
-  color: var(--text-dimmer);
+  color: var(--text-muted);
 }
 
 .meter {
@@ -602,9 +605,9 @@ button { font-family: inherit; }
 
 .heatmap-legend__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
 }
 
 .heatmap-legend__bar {
@@ -624,10 +627,10 @@ button { font-family: inherit; }
 
 .stat__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
 }
 
 .stat__value {
@@ -636,7 +639,7 @@ button { font-family: inherit; }
   color: var(--text);
 }
 
-.stat__value .unit { color: var(--text-faint); }
+.stat__value .unit { color: var(--text-dimmer); }
 
 /* ---------- Result: MITRE techniques ---------- */
 .tech-list {
@@ -670,10 +673,10 @@ button { font-family: inherit; }
 
 .tech__tactic {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-dimmer);
+  color: var(--text-muted);
 }
 
 /* ---------- Result: explanation ---------- */
@@ -688,8 +691,8 @@ button { font-family: inherit; }
 
 .explanation-footer {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-faint);
+  font-size: 12px;
+  color: var(--text-dimmer);
 }
 
 /* ---------- Result: hash panel ---------- */
@@ -702,8 +705,8 @@ button { font-family: inherit; }
 
 .hash-panel__value {
   font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-dim);
+  font-size: 14px;
+  color: var(--text-muted);
   word-break: break-all;
   margin-top: 8px;
 }
@@ -738,10 +741,10 @@ button { font-family: inherit; }
 
 .error-row__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
 }
 
 .error-row__value {
@@ -810,8 +813,8 @@ button { font-family: inherit; }
 
 .history-hash {
   font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-dim);
+  font-size: 14px;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -843,8 +846,8 @@ button { font-family: inherit; }
 
 .history-time {
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-dimmer);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .history-empty {
@@ -855,7 +858,7 @@ button { font-family: inherit; }
 .history-empty__msg {
   font-family: var(--font-serif);
   font-size: 26px;
-  color: var(--text-dimmer);
+  color: var(--text-muted);
   margin: 0 0 20px;
 }
 
@@ -895,9 +898,9 @@ button { font-family: inherit; }
 
 .hero-desc {
   font-family: var(--font-sans);
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.6;
-  color: var(--text-dim);
+  color: var(--text-muted);
   max-width: 60ch;
   margin: 0 0 40px;
 }
@@ -908,10 +911,10 @@ button { font-family: inherit; }
 
 .drop-zone__label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-dimmer);
 }
 
 .drop-zone__overlay-label {
@@ -943,10 +946,20 @@ button { font-family: inherit; }
   margin-top: 20px;
   background: var(--accent);
   color: var(--bg);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
 }
 
 .upload-submit:hover { background: var(--accent-hover); }
+
+.upload-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--text-faint);
+}
+
+.upload-submit:disabled:hover {
+  background: var(--text-faint);
+}
 
 .pipeline-grid {
   list-style: none;
@@ -980,6 +993,6 @@ button { font-family: inherit; }
 
 .pipeline-step__desc {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-faint);
+  font-size: 12px;
+  color: var(--text-dimmer);
 }

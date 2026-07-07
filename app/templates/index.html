@@ -4,12 +4,12 @@
 
 {% block content %}
 <section class="upload-view" aria-labelledby="upload-heading">
-  <span class="eyebrow">Local PE analysis · no telemetry</span>
-  <h1 id="upload-heading" class="hero-title">Classify a Windows executable, and understand why.</h1>
+  <span class="eyebrow">Local PE analysis</span>
+  <h1 id="upload-heading" class="hero-title">Classify and understand, without sending a single byte out.</h1>
   <p class="hero-desc">
     Upload a PE file. EntroSight renders a byte-entropy heatmap, a fine-tuned
     ResNet-50 predicts the malware family, and a local model explains the verdict
-    against MITRE ATT&amp;CK — nothing leaves this machine.
+    against MITRE ATT&amp;CK.
   </p>
 
   <form
@@ -19,7 +19,7 @@
     hx-encoding="multipart/form-data"
     hx-target="#result-container"
     hx-swap="innerHTML"
-    hx-trigger="submit, change from:#file-input"
+    hx-trigger="submit"
   >
     <label
       id="drop-zone"
@@ -30,12 +30,11 @@
       <span class="drop-zone__label">Drop zone</span>
       <span class="drop-zone__title">Drop a binary here, or click to browse</span>
       <span class="drop-zone__hint">
-        Accepted: .exe · .dll · .sys — maximum 50 MB. The MZ header is validated
-        before any processing begins.
+        Accepted: .exe · .dll · .sys: maximum 50 MB.
       </span>
-      <span class="drop-zone__cmd">$ analyze --local --model resnet50 &lt;file&gt;</span>
+      <span id="file-selected" class="drop-zone__selected" style="display: none;"></span>
       <div class="drop-zone__overlay" aria-hidden="true">
-        <span class="drop-zone__overlay-label">Release to analyze</span>
+        <span class="drop-zone__overlay-label"> </span>
       </div>
     </label>
 
@@ -48,7 +47,7 @@
       required
     />
 
-    <button type="submit" class="upload-submit">Analyze binary</button>
+    <button type="submit" class="upload-submit" id="analyze-button" disabled>Analyze binary</button>
   </form>
 
   <ol class="pipeline-grid" aria-label="Analysis pipeline steps">
@@ -89,12 +88,29 @@
   (function () {
     var dropZone = document.getElementById("drop-zone");
     var fileInput = document.getElementById("file-input");
-    if (!dropZone || !fileInput) return;
+    var analyzeButton = document.getElementById("analyze-button");
+    var fileSelected = document.getElementById("file-selected");
+    if (!dropZone || !fileInput || !analyzeButton) return;
 
     function stop(e) {
       e.preventDefault();
       e.stopPropagation();
     }
+
+    function updateFileDisplay() {
+      if (fileInput.files && fileInput.files.length > 0) {
+        var fileName = fileInput.files[0].name;
+        fileSelected.textContent = "Selected: " + fileName;
+        fileSelected.style.display = "block";
+        analyzeButton.disabled = false;
+      } else {
+        fileSelected.style.display = "none";
+        analyzeButton.disabled = true;
+      }
+    }
+
+    // Show selected file when user picks via file dialog
+    fileInput.addEventListener("change", updateFileDisplay);
 
     ["dragenter", "dragover"].forEach(function (evt) {
       dropZone.addEventListener(evt, function (e) {
@@ -115,8 +131,7 @@
       dropZone.classList.remove("drop-zone--dragging");
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
         fileInput.files = e.dataTransfer.files;
-        // Fire change so the HTMX-bound form submits.
-        fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+        updateFileDisplay();
       }
     });
   })();

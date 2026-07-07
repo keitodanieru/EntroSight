@@ -52,3 +52,5 @@ class AppSettings(BaseSettings):
 
     class Config:
         env_prefix = "ENTROSIGHT_"
+        env_file = ".env"
+        env_file_encoding = "utf-8"
