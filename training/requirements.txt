@@ -1,0 +1,9 @@
+# Training dependencies
+# Most are already in the main requirements.txt — this covers any extras needed for training only.
+# Install with: pip install -r training/requirements.txt
+
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+Pillow>=9.5.0
