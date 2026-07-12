@@ -18,7 +18,7 @@ import torch.nn as nn
 from torch.amp import GradScaler, autocast
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.models import ResNet50_Weights, resnet50
 
@@ -195,20 +195,6 @@ def compute_class_weights(labels: list[int], num_classes: int) -> torch.Tensor:
     return torch.tensor(weights, dtype=torch.float32)
 
 
-def create_weighted_sampler(labels: list[int], num_classes: int) -> WeightedRandomSampler:
-    """Create a sampler that ensures balanced class representation per epoch."""
-    class_counts = [0] * num_classes
-    for label in labels:
-        class_counts[label] += 1
-
-    sample_weights = [1.0 / class_counts[label] for label in labels]
-    return WeightedRandomSampler(
-        weights=sample_weights,
-        num_samples=len(labels),
-        replacement=True,
-    )
-
-
 def train_one_epoch(
     model: nn.Module,
     loader: DataLoader,
@@ -339,14 +325,12 @@ def main(args: argparse.Namespace) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # === Data Transforms ===
-    # Training: augmentation + normalization
+    # Training: spatial augmentation + normalization
+    # NOTE: No ColorJitter — entropy is encoded as pixel intensity, not color.
+    # Perturbing brightness/contrast would alter the entropy signal itself.
     train_transform = transforms.Compose([
         transforms.RandomHorizontalFlip(p=AUGMENTATION["random_horizontal_flip"]),
         transforms.RandomRotation(degrees=AUGMENTATION["random_rotation_degrees"]),
-        transforms.ColorJitter(
-            brightness=AUGMENTATION["color_jitter_brightness"],
-            contrast=AUGMENTATION["color_jitter_contrast"],
-        ),
         transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
     ])
 
@@ -368,10 +352,11 @@ def main(args: argparse.Namespace) -> None:
         print("ERROR: Training dataset is empty. Run generate_dataset.py first.")
         sys.exit(1)
 
-    # === Class Weights & Sampler ===
+    # === Class Weights (single rebalancing mechanism) ===
+    # Using class-weighted loss ONLY — no WeightedRandomSampler.
+    # Combining both would double-correct for imbalance and overcorrect toward minority classes.
     train_labels = train_dataset.get_labels()
     class_weights = compute_class_weights(train_labels, NUM_CLASSES).to(device)
-    sampler = create_weighted_sampler(train_labels, NUM_CLASSES)
 
     print(f"\nClass weights: {dict(zip(CLASS_LABELS, class_weights.tolist()))}")
 
@@ -379,7 +364,7 @@ def main(args: argparse.Namespace) -> None:
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
-        sampler=sampler,  # Weighted sampler for balanced batches
+        shuffle=True,  # Standard shuffle — class-weighted loss handles imbalance
         num_workers=NUM_WORKERS,
         pin_memory=(device.type == "cuda"),
         persistent_workers=(NUM_WORKERS > 0),

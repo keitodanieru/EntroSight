@@ -24,8 +24,10 @@ MODELS_DIR = PROJECT_ROOT / "models"
 # Maximum samples per class (for balanced dataset)
 MAX_SAMPLES_PER_CLASS = 1500
 
-# Train/validation split ratio
-VAL_SPLIT = 0.2
+# Train/validation/test split ratios (must sum to 1.0)
+TRAIN_SPLIT = 0.8
+VAL_SPLIT = 0.1
+TEST_SPLIT = 0.1
 
 # Random seed for reproducibility
 SEED = 42
@@ -36,9 +38,9 @@ CLASS_LABELS = [
     "AgentTesla",
     "Remcos",
     "DCRat",
-    "Androm",
-    "SnakeLogger",
-    "Mokes",
+    "FormBook",
+    "RedLine",
+    "AsyncRAT",
     "Benign",
 ]
 
@@ -75,11 +77,12 @@ COSINE_T_MULT = 2  # Period multiplier after each restart
 
 
 # === Data Augmentation (training only) ===
+# NOTE: Only spatial augmentations are used. ColorJitter is intentionally excluded
+# because the heatmap encodes entropy as pixel intensity — perturbing brightness/contrast
+# would alter the actual entropy signal, injecting label noise rather than meaningful variation.
 AUGMENTATION = {
     "random_horizontal_flip": 0.5,
     "random_rotation_degrees": 10,
-    "color_jitter_brightness": 0.1,
-    "color_jitter_contrast": 0.1,
 }
 
 

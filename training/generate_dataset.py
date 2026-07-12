@@ -7,6 +7,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import random
 import sys
 from pathlib import Path
@@ -23,7 +24,9 @@ from training.config import (
     MAX_SAMPLES_PER_CLASS,
     RAW_SAMPLES_DIR,
     SEED,
+    TRAIN_SPLIT,
     VAL_SPLIT,
+    TEST_SPLIT,
 )
 
 
@@ -40,9 +43,9 @@ def find_class_folders(raw_dir: Path) -> dict[str, Path]:
         "agenttesla": "AgentTesla",
         "remcos": "Remcos",
         "dcrat": "DCRat",
-        "androm": "Androm",
-        "snakelogger": "SnakeLogger",
-        "mokes": "Mokes",
+        "formbook": "FormBook",
+        "redline": "RedLine",
+        "asyncrat": "AsyncRAT",
         "benign": "Benign",
     }
 
@@ -122,6 +125,7 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
     # Create output directories
     train_dir = output_dir / "train"
     val_dir = output_dir / "val"
+    test_dir = output_dir / "test"
 
     # Process each class
     total_generated = 0
@@ -136,21 +140,50 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
         all_files = get_pe_files(folder_path)
         print(f"  Found {len(all_files)} files")
 
+        # Pre-sample before dedup if we have way more than needed
+        # Take 2x max_samples to leave room for duplicates being removed
+        if len(all_files) > max_samples * 2:
+            random.shuffle(all_files)
+            all_files = all_files[:max_samples * 2]
+            print(f"  Pre-sampled to {len(all_files)} for dedup (2x target)")
+
+        # Deduplicate by SHA256 hash to prevent near-duplicate leakage across splits
+        seen_hashes: set[str] = set()
+        unique_files: list[Path] = []
+        for f in all_files:
+            try:
+                file_hash = hashlib.sha256(f.read_bytes()).hexdigest()
+                if file_hash not in seen_hashes:
+                    seen_hashes.add(file_hash)
+                    unique_files.append(f)
+            except (OSError, PermissionError):
+                continue
+
+        dupes_removed = len(all_files) - len(unique_files)
+        if dupes_removed > 0:
+            print(f"  Removed {dupes_removed} exact duplicates ({len(unique_files)} unique)")
+        all_files = unique_files
+
         # Cap at max_samples
         if len(all_files) > max_samples:
             random.shuffle(all_files)
             all_files = all_files[:max_samples]
             print(f"  Capped to {max_samples} samples")
 
-        # Shuffle and split into train/val
+        # Shuffle and split into train/val/test (80/10/10)
         random.shuffle(all_files)
-        split_idx = int(len(all_files) * (1 - VAL_SPLIT))
-        train_files = all_files[:split_idx]
-        val_files = all_files[split_idx:]
+        n = len(all_files)
+        train_end = int(n * TRAIN_SPLIT)
+        val_end = train_end + int(n * VAL_SPLIT)
+
+        train_files = all_files[:train_end]
+        val_files = all_files[train_end:val_end]
+        test_files = all_files[val_end:]
 
         # Create class directories
         (train_dir / label).mkdir(parents=True, exist_ok=True)
         (val_dir / label).mkdir(parents=True, exist_ok=True)
+        (test_dir / label).mkdir(parents=True, exist_ok=True)
 
         # Process training files
         train_count = 0
@@ -192,9 +225,29 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
                 print(f"  [SKIP] {pe_path.name}: {e}")
                 continue
 
-        class_counts[label] = {"train": train_count, "val": val_count}
-        total_generated += train_count + val_count
-        print(f"  Done: {train_count} train + {val_count} val = {train_count + val_count} total")
+        # Process test files
+        test_count = 0
+        for i, pe_path in enumerate(test_files):
+            try:
+                file_bytes = pe_path.read_bytes()
+                if len(file_bytes) < 64:
+                    continue
+
+                heatmap_tensor = generator.generate(file_bytes)
+                output_path = test_dir / label / f"{i:05d}.pt"
+                torch.save(heatmap_tensor, output_path)
+                test_count += 1
+
+                if (i + 1) % 100 == 0:
+                    print(f"  [test] {i + 1}/{len(test_files)} processed")
+
+            except Exception as e:
+                print(f"  [SKIP] {pe_path.name}: {e}")
+                continue
+
+        class_counts[label] = {"train": train_count, "val": val_count, "test": test_count}
+        total_generated += train_count + val_count + test_count
+        print(f"  Done: {train_count} train + {val_count} val + {test_count} test = {train_count + val_count + test_count} total")
 
     # Print summary
     print(f"\n{'='*60}")
@@ -203,12 +256,13 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
     print(f"Total samples generated: {total_generated}")
     print(f"Output directory: {output_dir}")
     print(f"\nPer-class breakdown:")
-    print(f"  {'Class':<20} {'Train':>8} {'Val':>8} {'Total':>8}")
-    print(f"  {'-'*46}")
+    print(f"  {'Class':<20} {'Train':>8} {'Val':>8} {'Test':>8} {'Total':>8}")
+    print(f"  {'-'*56}")
     for label in CLASS_LABELS:
         if label in class_counts:
             c = class_counts[label]
-            print(f"  {label:<20} {c['train']:>8} {c['val']:>8} {c['train']+c['val']:>8}")
+            total = c['train'] + c['val'] + c['test']
+            print(f"  {label:<20} {c['train']:>8} {c['val']:>8} {c['test']:>8} {total:>8}")
 
     print(f"\nNext step: python training/train.py")
 

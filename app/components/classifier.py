@@ -19,9 +19,9 @@ class MalwareClassifier:
         "AgentTesla",
         "Remcos",
         "DCRat",
-        "Androm",
-        "SnakeLogger",
-        "Mokes",
+        "FormBook",
+        "RedLine",
+        "AsyncRAT",
         "Benign",
     ]
 

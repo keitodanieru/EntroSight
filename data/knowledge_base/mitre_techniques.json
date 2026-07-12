@@ -90,94 +90,94 @@
     "text": "DCRat encrypts its command-and-control communications using AES symmetric encryption. The encryption key is derived from a hardcoded seed embedded in the malware configuration. This prevents network monitoring tools from inspecting the content of C2 traffic."
   },
   {
-    "technique_id": "T1071.001",
-    "technique_name": "Web Protocols",
-    "family": "Androm",
-    "text": "Andromeda (Gamarue) communicates with its command-and-control infrastructure over HTTP using custom-encoded POST requests. The bot sends system fingerprint data and receives plugin commands in obfuscated binary format. C2 domains are hardcoded and rotated across campaigns to resist takedowns."
+    "technique_id": "T1055",
+    "technique_name": "Process Injection",
+    "family": "FormBook",
+    "text": "FormBook injects its code into multiple running processes using process hollowing and RunPE techniques. It targets explorer.exe for persistence and web browsers for form data interception. The injection chain uses ntdll native API calls to evade user-mode API monitoring hooks."
   },
   {
-    "technique_id": "T1129",
-    "technique_name": "Shared Modules",
-    "family": "Androm",
-    "text": "Andromeda uses a modular plugin architecture that downloads and loads additional DLL-based payloads at runtime. Plugins include keyloggers, browser form grabbers, rootkits, and credential stealers. This modularity allows operators to customize infections post-compromise without redeploying the core bot."
+    "technique_id": "T1056.004",
+    "technique_name": "Credential API Hooking",
+    "family": "FormBook",
+    "text": "FormBook hooks network-related APIs in web browsers to intercept form submissions containing credentials and payment data. It installs inline hooks on functions like HttpSendRequest and PR_Write to capture data before TLS encryption. This technique captures credentials even on HTTPS-protected websites."
   },
   {
-    "technique_id": "T1547.001",
-    "technique_name": "Registry Run Keys / Startup Folder",
-    "family": "Androm",
-    "text": "Andromeda persists by adding registry run key entries under HKCU or HKLM and copying itself to the user's AppData or Temp directory under a randomized filename. Some variants also create scheduled tasks for redundant persistence. The bot re-establishes C2 communication immediately after reboot."
+    "technique_id": "T1497",
+    "technique_name": "Virtualization/Sandbox Evasion",
+    "family": "FormBook",
+    "text": "FormBook employs extensive anti-analysis techniques including checks for debuggers, virtual machines, and malware analysis tools. It hashes running process names and compares them against a blacklist of known analysis tools. If sandboxing is detected, it redirects execution to benign decoy code paths."
   },
   {
-    "technique_id": "T1091",
-    "technique_name": "Replication Through Removable Media",
-    "family": "Androm",
-    "text": "Andromeda spreads to removable USB drives by creating hidden copies of itself and placing autorun.inf files that trigger execution when the drive is inserted into another system. It hides original files on the drive and replaces them with malicious shortcuts. This worm-like propagation method enables offline spreading across air-gapped networks."
+    "technique_id": "T1027",
+    "technique_name": "Obfuscated Files or Information",
+    "family": "FormBook",
+    "text": "FormBook heavily obfuscates its code using string encryption, control flow flattening, and junk code insertion. Critical strings like API names and C2 URLs are encrypted with custom algorithms and decrypted only at runtime. Each build uses a unique obfuscation seed making static signatures unreliable."
   },
   {
-    "technique_id": "T1564.001",
-    "technique_name": "Hidden Files and Directories",
-    "family": "Androm",
-    "text": "Andromeda sets hidden and system attributes on its dropped files to avoid casual user detection. On infected USB drives it hides legitimate user files and creates visible shortcuts that execute the malware when opened. The bot also injects into explorer.exe to maintain stealth during execution."
+    "technique_id": "T1185",
+    "technique_name": "Browser Session Hijacking",
+    "family": "FormBook",
+    "text": "FormBook can hijack active browser sessions by injecting into browser processes and manipulating web content. It captures clipboard data, takes screenshots, and can modify web page content displayed to the user. This enables both credential theft and manipulation of banking transactions."
   },
   {
     "technique_id": "T1555.003",
     "technique_name": "Credentials from Web Browsers",
-    "family": "SnakeLogger",
-    "text": "Snake Keylogger extracts saved passwords, cookies, and autofill data from Chromium-based and Gecko-based browsers. It reads the SQLite login databases and decrypts stored credentials using the Windows Data Protection API (DPAPI). The harvested credentials are formatted and exfiltrated to attacker infrastructure via SMTP, FTP, or Telegram."
+    "family": "RedLine",
+    "text": "RedLine Stealer extracts saved passwords, cookies, and autofill data from Chromium-based and Gecko-based web browsers. It directly reads SQLite databases and decrypts credential entries using the Windows DPAPI. Stolen browser data is a primary target for subsequent credential stuffing attacks."
   },
   {
-    "technique_id": "T1056.001",
-    "technique_name": "Keylogging",
-    "family": "SnakeLogger",
-    "text": "Snake Keylogger installs a global keyboard hook to capture all user keystrokes in real-time. It logs active window titles alongside keystrokes to provide context for captured credentials. Keystroke data is buffered and periodically exfiltrated to the configured C2 channel."
+    "technique_id": "T1012",
+    "technique_name": "Query Registry",
+    "family": "RedLine",
+    "text": "RedLine queries the Windows registry to gather system information including installed software, hardware identifiers, and security product details. This reconnaissance data is packaged alongside stolen credentials to build a complete victim profile. The registry queries help identify high-value targets and installed cryptocurrency wallets."
   },
   {
-    "technique_id": "T1113",
-    "technique_name": "Screen Capture",
-    "family": "SnakeLogger",
-    "text": "Snake Keylogger captures screenshots at regular intervals to monitor user activity and capture visually displayed sensitive information. Screenshots are compressed and queued for exfiltration alongside keystroke logs. This provides attackers with visual confirmation of stolen data entry."
+    "technique_id": "T1005",
+    "technique_name": "Data from Local System",
+    "family": "RedLine",
+    "text": "RedLine searches for and collects cryptocurrency wallet files, VPN configurations, and messaging application databases from predefined paths. It targets wallets for Bitcoin, Ethereum, and other cryptocurrencies by scanning known installation directories. Collected files are compressed and exfiltrated alongside browser credentials."
   },
   {
-    "technique_id": "T1071.003",
-    "technique_name": "Mail Protocols",
-    "family": "SnakeLogger",
-    "text": "Snake Keylogger exfiltrates stolen data via SMTP to attacker-controlled email accounts. Credentials, keystrokes, and screenshots are formatted into email messages with structured subject lines for automated parsing. Some variants alternatively use FTP upload or Telegram bot APIs for exfiltration."
+    "technique_id": "T1071.001",
+    "technique_name": "Web Protocols",
+    "family": "RedLine",
+    "text": "RedLine exfiltrates stolen data to its C2 panel over HTTPS POST requests with Base64-encoded payloads. The communication uses a custom binary serialization format for structured data transmission. C2 servers are typically hosted on bulletproof infrastructure with frequently rotating domains."
   },
   {
-    "technique_id": "T1027.004",
-    "technique_name": "Compile After Delivery",
-    "family": "SnakeLogger",
-    "text": "Snake Keylogger delivery chains often use multi-stage .NET loaders that dynamically compile and execute payloads in memory. The initial dropper decrypts an embedded resource, loads it via reflection, and executes without writing the final payload to disk. This technique evades static file scanning and signature-based detection."
+    "technique_id": "T1082",
+    "technique_name": "System Information Discovery",
+    "family": "RedLine",
+    "text": "RedLine collects detailed system fingerprint data including OS version, CPU model, RAM size, GPU info, screen resolution, and installed languages. This information is sent to the C2 server as part of the initial beacon to identify and categorize victims. The fingerprint helps operators prioritize high-value targets."
   },
   {
-    "technique_id": "T1113",
-    "technique_name": "Screen Capture",
-    "family": "Mokes",
-    "text": "Mokes captures screenshots of the victim's desktop at configurable intervals. Screenshots are saved as temporary image files before being queued for upload to the command-and-control server. This surveillance capability enables visual monitoring of user activity and confirmation of target value."
+    "technique_id": "T1095",
+    "technique_name": "Non-Application Layer Protocol",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT communicates with its C2 server using raw TCP sockets with custom binary protocols. The communication is encrypted using a certificate-based TLS connection or AES encryption. This non-standard protocol makes signature-based network detection difficult."
   },
   {
-    "technique_id": "T1056.001",
-    "technique_name": "Keylogging",
-    "family": "Mokes",
-    "text": "Mokes implements a keylogger that records all keyboard input on the infected system. Keystrokes are stored in local log files with timestamps and transmitted to the C2 server during periodic check-ins. The keylogger captures credentials and sensitive communications across all applications."
-  },
-  {
-    "technique_id": "T1125",
-    "technique_name": "Video Capture",
-    "family": "Mokes",
-    "text": "Mokes can capture audio and video from the system microphone and webcam. Media recordings are stored locally and exfiltrated to the C2 infrastructure on a configurable schedule. This gives operators real-time surveillance capabilities on compromised endpoints."
+    "technique_id": "T1059.001",
+    "technique_name": "PowerShell",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT delivery chains frequently use PowerShell scripts for initial execution and payload staging. The scripts download encrypted payloads, decode them in memory, and use reflection to load the .NET RAT assembly. Multi-stage PowerShell execution helps evade static file scanning."
   },
   {
     "technique_id": "T1547.001",
     "technique_name": "Registry Run Keys / Startup Folder",
-    "family": "Mokes",
-    "text": "Mokes establishes persistence by placing copies of itself in the user's Application Data directory and registering them with startup registry keys. It uses randomly generated filenames to avoid simple signature detection. The backdoor re-initializes C2 communication on every system boot."
+    "family": "AsyncRAT",
+    "text": "AsyncRAT persists by creating scheduled tasks and adding registry run key entries pointing to its executable or a loader script. It targets both HKCU and HKLM run keys depending on available privileges. The persistence mechanism activates the RAT on every user logon."
   },
   {
-    "technique_id": "T1573.001",
-    "technique_name": "Symmetric Cryptography",
-    "family": "Mokes",
-    "text": "Mokes encrypts all command-and-control communications using AES-256 encryption. The encryption keys are derived from hardcoded values embedded in the binary. This prevents network-level inspection of data exfiltration and command traffic between the backdoor and its operators."
+    "technique_id": "T1056.001",
+    "technique_name": "Keylogging",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT includes a keylogging module that hooks keyboard input events to capture user keystrokes. Logged data is buffered locally and transmitted to the C2 server at regular intervals. The keylogger records the active window title alongside captured text for context."
+  },
+  {
+    "technique_id": "T1497",
+    "technique_name": "Virtualization/Sandbox Evasion",
+    "family": "AsyncRAT",
+    "text": "AsyncRAT checks for virtual machine artifacts, debugger presence, and sandbox indicators before executing its payload. It inspects hardware identifiers, checks for known VM MAC address prefixes, and queries WMI for virtualization strings. If a sandbox is detected, the malware exits or enters a dormant loop."
   },
   {
     "technique_id": "T1036",

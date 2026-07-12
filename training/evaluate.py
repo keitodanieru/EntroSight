@@ -198,17 +198,22 @@ def main(args: argparse.Namespace) -> None:
 
     model = load_model(checkpoint_path, device)
 
-    # Load validation dataset
+    # Load test dataset (completely unseen during training)
     val_transform = transforms.Compose([
         transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
     ])
 
     dataset_dir = Path(args.dataset_dir)
-    print(f"\nLoading validation set from {dataset_dir / 'val'}...")
-    val_dataset = HeatmapDataset(dataset_dir / "val", transform=val_transform)
+    print(f"\nLoading test set from {dataset_dir / 'test'}...")
+    val_dataset = HeatmapDataset(dataset_dir / "test", transform=val_transform)
 
     if len(val_dataset) == 0:
-        print("ERROR: Validation dataset is empty.")
+        # Fall back to val set if test doesn't exist
+        print("Test set not found, falling back to validation set...")
+        val_dataset = HeatmapDataset(dataset_dir / "val", transform=val_transform)
+
+    if len(val_dataset) == 0:
+        print("ERROR: No evaluation dataset found.")
         sys.exit(1)
 
     val_loader = DataLoader(
