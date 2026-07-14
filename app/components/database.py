@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS scan_results (
     explanation TEXT NOT NULL,
     heatmap_path TEXT NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total_time_ms REAL NOT NULL
+    total_time_ms REAL NOT NULL,
+    file_size INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_scan_results_sha256 ON scan_results(sha256);
@@ -44,6 +45,12 @@ class ScanHistoryDB:
         self._db = await aiosqlite.connect(self.db_path)
         self._db.row_factory = aiosqlite.Row
         await self._db.executescript(_SCHEMA_SQL)
+        # Migrate: add file_size column if it doesn't exist (for existing DBs)
+        try:
+            await self._db.execute("ALTER TABLE scan_results ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0")
+            await self._db.commit()
+        except Exception:
+            pass  # Column already exists
         await self._db.commit()
 
     async def close(self) -> None:
@@ -64,8 +71,8 @@ class ScanHistoryDB:
             """
             INSERT INTO scan_results
                 (sha256, filename, predicted_label, confidence,
-                 explanation, heatmap_path, timestamp, total_time_ms)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 explanation, heatmap_path, timestamp, total_time_ms, file_size)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 result.sha256,
@@ -76,6 +83,7 @@ class ScanHistoryDB:
                 result.heatmap_path,
                 result.timestamp.isoformat(),
                 result.total_time_ms,
+                result.file_size,
             ),
         )
         await self._db.commit()
@@ -161,4 +169,5 @@ class ScanHistoryDB:
             heatmap_path=row["heatmap_path"],
             timestamp=datetime.fromisoformat(row["timestamp"]),
             total_time_ms=row["total_time_ms"],
+            file_size=row["file_size"] if "file_size" in row.keys() else 0,
         )

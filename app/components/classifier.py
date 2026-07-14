@@ -25,14 +25,20 @@ class MalwareClassifier:
         "Benign",
     ]
 
-    def __init__(self, checkpoint_path: str, device: str = "cpu") -> None:
+    # Label returned when confidence is below the threshold
+    UNKNOWN_LABEL: str = "Unknown"
+
+    def __init__(self, checkpoint_path: str, device: str = "cpu", confidence_threshold: float = 0.70) -> None:
         """Load model checkpoint and prepare for inference.
 
         Args:
             checkpoint_path: Path to the .pth checkpoint file.
             device: Device to run inference on (default: "cpu").
+            confidence_threshold: Minimum confidence to trust a prediction.
+                Below this, the label is reported as "Unknown".
         """
         self.device = torch.device(device)
+        self.confidence_threshold = confidence_threshold
         num_classes = len(self.CLASS_LABELS)
 
         # Initialize ResNet50 architecture with modified final layer
@@ -81,6 +87,11 @@ class MalwareClassifier:
         top_idx = torch.argmax(probabilities).item()
         confidence = probabilities[top_idx].item()
         predicted_label = self.CLASS_LABELS[top_idx]
+
+        # Step 6: Apply confidence threshold — report "Unknown" if the model
+        # is not confident enough, rather than forcing a low-confidence guess.
+        if confidence < self.confidence_threshold:
+            predicted_label = self.UNKNOWN_LABEL
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000
 

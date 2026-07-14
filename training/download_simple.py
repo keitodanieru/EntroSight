@@ -6,6 +6,8 @@ Based on the one-liner that confirmed working.
 Usage:
     python -u training/download_simple.py AgentTesla 500
     python -u training/download_simple.py Remcos 500
+    python -u training/download_simple.py RedLine 500 --tag RedLineStealer
+    python -u training/download_simple.py FormBook 500 --tag XLoader
 """
 
 import io
@@ -24,18 +26,27 @@ DELAY = 5  # seconds between downloads
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python download_simple.py <FamilyTag> [limit]")
-        print("  e.g: python download_simple.py AgentTesla 500")
+        print("Usage: python download_simple.py <FamilyName> [limit] [--tag CustomTag]")
+        print("  e.g: python download_simple.py RedLine 500 --tag RedLineStealer")
         sys.exit(1)
 
-    tag = sys.argv[1]
-    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 500
-    out_dir = f"{OUTPUT_BASE}/{tag}"
+    family = sys.argv[1]
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 and not sys.argv[2].startswith("-") else 500
+    
+    # Check for --tag flag
+    tag = family  # default: use family name as tag
+    if "--tag" in sys.argv:
+        tag_idx = sys.argv.index("--tag")
+        if tag_idx + 1 < len(sys.argv):
+            tag = sys.argv[tag_idx + 1]
+
+    out_dir = f"{OUTPUT_BASE}/{family}"
     os.makedirs(out_dir, exist_ok=True)
 
     # Get existing files
     existing = set(os.listdir(out_dir))
-    print(f"Family: {tag}")
+    print(f"Family: {family}")
+    print(f"Tag: {tag}")
     print(f"Target: {limit}, Already have: {len(existing)}")
     print(f"Output: {out_dir}")
     print(f"Delay: {DELAY}s between downloads\n")

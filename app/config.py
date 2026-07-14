@@ -22,6 +22,7 @@ class AppSettings(BaseSettings):
     max_file_size_mb: int = 50
     entropy_block_size: int = 256
     heatmap_image_size: int = 256
+    confidence_threshold: float = 0.70
 
     # RAG settings
     chromadb_path: str = "data/chromadb"

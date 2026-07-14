@@ -30,9 +30,10 @@
       <span class="drop-zone__label">Drop zone</span>
       <span class="drop-zone__title">Drop a binary here, or click to browse</span>
       <span class="drop-zone__hint">
-        Accepted: .exe · .dll · .sys: maximum 50 MB.
+        Accepted: PE binaries (MZ signature required) · maximum 50 MB.
       </span>
       <span id="file-selected" class="drop-zone__selected" style="display: none;"></span>
+      <button type="button" id="clear-file" class="drop-zone__clear" style="display: none;" aria-label="Clear selected file">✕ Clear</button>
       <div class="drop-zone__overlay" aria-hidden="true">
         <span class="drop-zone__overlay-label"> </span>
       </div>
@@ -43,7 +44,6 @@
       id="file-input"
       name="file"
       class="visually-hidden"
-      accept=".exe,.dll,.sys"
       required
     />
 
@@ -90,6 +90,7 @@
     var fileInput = document.getElementById("file-input");
     var analyzeButton = document.getElementById("analyze-button");
     var fileSelected = document.getElementById("file-selected");
+    var clearButton = document.getElementById("clear-file");
     if (!dropZone || !fileInput || !analyzeButton) return;
 
     function stop(e) {
@@ -100,17 +101,32 @@
     function updateFileDisplay() {
       if (fileInput.files && fileInput.files.length > 0) {
         var fileName = fileInput.files[0].name;
-        fileSelected.textContent = "Selected: " + fileName;
+        var fileSize = fileInput.files[0].size;
+        var sizeStr = fileSize < 1024 * 1024
+          ? (fileSize / 1024).toFixed(1) + " KB"
+          : (fileSize / (1024 * 1024)).toFixed(2) + " MB";
+        fileSelected.textContent = "Selected: " + fileName + " (" + sizeStr + ")";
         fileSelected.style.display = "block";
+        clearButton.style.display = "inline-block";
         analyzeButton.disabled = false;
       } else {
         fileSelected.style.display = "none";
+        clearButton.style.display = "none";
         analyzeButton.disabled = true;
       }
     }
 
+    function clearFile(e) {
+      stop(e);
+      fileInput.value = "";
+      updateFileDisplay();
+    }
+
     // Show selected file when user picks via file dialog
     fileInput.addEventListener("change", updateFileDisplay);
+
+    // Clear button resets the selection
+    clearButton.addEventListener("click", clearFile);
 
     ["dragenter", "dragover"].forEach(function (evt) {
       dropZone.addEventListener(evt, function (e) {

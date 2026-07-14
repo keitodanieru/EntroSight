@@ -15,6 +15,7 @@
 --------------------------------------------------------------------------- #}
 
 {% set is_benign = (r.predicted_label == "Benign") %}
+{% set is_unknown = (r.predicted_label == "Unknown") %}
 {% set confidence_pct = (r.confidence * 100) if r.confidence is not none else 0 %}
 {% set heatmap_src = (r.heatmap_url if r.heatmap_url is defined and r.heatmap_url
                       else (r.heatmap_path if r.heatmap_path is defined else "")) %}
@@ -37,8 +38,8 @@
     <div>
       <span class="eyebrow">Classification</span>
       <div>
-        <span class="verdict-badge {{ 'verdict-badge--benign' if is_benign else 'verdict-badge--malicious' }}">
-          {{ "Benign" if is_benign else "Malicious" }}
+        <span class="verdict-badge {{ 'verdict-badge--benign' if is_benign else ('verdict-badge--unknown' if is_unknown else 'verdict-badge--malicious') }}">
+          {{ "Benign" if is_benign else ("Inconclusive" if is_unknown else "Malicious") }}
         </span>
       </div>
       <h2 class="family-name">{{ r.predicted_label }}</h2>
@@ -120,6 +121,8 @@
       </div>
       {% elif is_benign %}
       <p class="lead" style="margin-top:16px">No ATT&amp;CK techniques are associated with a benign classification.</p>
+      {% elif is_unknown %}
+      <p class="lead" style="margin-top:16px">Classification confidence was too low to retrieve relevant techniques.</p>
       {% else %}
       <p class="lead" style="margin-top:16px">No ATT&amp;CK techniques were retrieved for this sample.</p>
       {% endif %}

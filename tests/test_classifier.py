@@ -83,9 +83,10 @@ class TestMalwareClassifierClassify:
     def test_predicted_label_is_valid_class(
         self, classifier: MalwareClassifier, sample_heatmap: torch.Tensor
     ) -> None:
-        """predicted_label must be one of the defined CLASS_LABELS."""
+        """predicted_label must be one of the defined CLASS_LABELS or 'Unknown'."""
         result = classifier.classify(sample_heatmap)
-        assert result.predicted_label in MalwareClassifier.CLASS_LABELS
+        valid_labels = set(MalwareClassifier.CLASS_LABELS) | {MalwareClassifier.UNKNOWN_LABEL}
+        assert result.predicted_label in valid_labels
 
     def test_confidence_between_zero_and_one(
         self, classifier: MalwareClassifier, sample_heatmap: torch.Tensor

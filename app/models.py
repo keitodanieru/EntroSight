@@ -93,6 +93,7 @@ class ScanRecord:
     heatmap_path: str  # Path to saved heatmap PNG
     timestamp: datetime = field(default_factory=datetime.utcnow)
     total_time_ms: float = 0.0
+    file_size: int = 0  # Original file size in bytes
 
 
 @dataclass

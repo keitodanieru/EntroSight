@@ -14,6 +14,13 @@ class ExplanationGenerator:
 
     FALLBACK_MESSAGE = "Explanation unavailable - LLM service temporarily unreachable"
 
+    UNKNOWN_MESSAGE = (
+        "The classifier could not determine this file's family with sufficient "
+        "confidence. This does not necessarily indicate the file is safe or malicious — "
+        "it may be a file type the model was not trained on, or an uncommon variant. "
+        "Consider submitting to a multi-engine scanner for a second opinion."
+    )
+
     SYSTEM_PROMPT = (
         "You are a malware analyst providing clear, concise threat intelligence "
         "explanations. Explain what the detected malware family does, its typical "
@@ -62,6 +69,15 @@ class ExplanationGenerator:
             ExplanationResult with explanation text, generation time, and model name.
         """
         start_time = time.perf_counter()
+
+        # Short-circuit for Unknown — no point calling the LLM
+        if label == "Unknown":
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            return ExplanationResult(
+                explanation_text=self.UNKNOWN_MESSAGE,
+                generation_time_ms=elapsed_ms,
+                model_used="none",
+            )
 
         # Build context from RAG passages
         if context_passages:

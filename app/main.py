@@ -8,10 +8,12 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from uuid import uuid4
 
+import numpy as np
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from PIL import Image
 
 from app.components.classifier import MalwareClassifier
 from app.components.database import ScanHistoryDB
@@ -58,7 +60,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     validator = FileValidator()
     heatmap_generator = EntropyHeatmapGenerator()
     classifier = MalwareClassifier(
-        checkpoint_path=settings.model_checkpoint_path, device="cpu"
+        checkpoint_path=settings.model_checkpoint_path,
+        device="cpu",
+        confidence_threshold=settings.confidence_threshold,
     )
     rag_engine = RAGEngine(
         collection_name=settings.rag_collection_name,
@@ -152,6 +156,81 @@ def _status_entry_to_response(entry: dict) -> ScanStatusResponse:
         result=_record_to_scan_response(result) if result is not None else None,
         error_message=entry.get("error_message"),
     )
+
+
+def _format_file_size(size_bytes: int) -> str | None:
+    """Convert bytes to human-readable file size string."""
+    if size_bytes <= 0:
+        return None
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.2f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+
+
+def _compute_heatmap_stats(heatmap_path: str) -> dict | None:
+    """Compute entropy statistics from the saved heatmap PNG.
+
+    Reads the heatmap image, converts pixel intensity back to approximate
+    entropy values, and returns mean entropy, high-entropy percentage,
+    and a structure assessment.
+    """
+    try:
+        if not os.path.exists(heatmap_path):
+            return None
+
+        img = Image.open(heatmap_path).convert("L")  # Grayscale
+        pixels = np.array(img, dtype=np.float32) / 255.0  # Normalize to [0, 1]
+
+        # Convert normalized values back to bits/byte (max 8.0)
+        entropy_values = pixels * 8.0
+
+        mean_entropy = float(np.mean(entropy_values))
+        # High-entropy threshold: blocks with > 7.0 bits/byte
+        high_entropy_pct = float(np.sum(entropy_values > 7.0)) / entropy_values.size * 100
+
+        # Structure assessment
+        if high_entropy_pct > 50:
+            structure = "Packed / encrypted"
+        elif high_entropy_pct > 20:
+            structure = "Partially packed"
+        else:
+            structure = "Not packed"
+
+        return {
+            "mean_entropy": f"{mean_entropy:.2f} bits/byte",
+            "high_entropy_pct": f"{high_entropy_pct:.0f}%",
+            "structure": structure,
+        }
+    except Exception:
+        return None
+
+
+def _get_techniques_for_record(record, rag_engine) -> list[dict]:
+    """Retrieve MITRE ATT&CK techniques for a completed scan record.
+
+    Returns a list of dicts with technique_id, technique_name, and tactic
+    suitable for rendering in the result template.
+    """
+    if record.predicted_label in ("Benign", "Unknown"):
+        return []
+
+    try:
+        passages = rag_engine.retrieve_context(record.predicted_label, top_k=5)
+        return [
+            {
+                "technique_id": p.technique_id,
+                "technique_name": p.technique_name,
+                "tactic": "",  # ChromaDB metadata doesn't include tactic
+            }
+            for p in passages
+        ]
+    except Exception:
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +369,24 @@ async def scan_result_page(request: Request, scan_id: int):
     # Attach a browser-facing heatmap URL (the stored heatmap_path is a
     # filesystem path and is not directly servable).
     record.heatmap_url = _heatmap_url_for(record)
+
+    # Compute human-readable file size from the stored file_size field.
+    file_size_human = _format_file_size(record.file_size)
+
+    # Compute heatmap statistics from the saved PNG
+    heatmap_stats = _compute_heatmap_stats(record.heatmap_path)
+
+    # Retrieve ATT&CK techniques for display
+    techniques = _get_techniques_for_record(record, request.app.state.components.rag_engine)
+
     return templates.TemplateResponse(
-        request, "result.html", {"isResult": True, "r": record}
+        request,
+        "result.html",
+        {
+            "isResult": True,
+            "r": record,
+            "file_size_human": file_size_human,
+            "heatmap_stats": heatmap_stats,
+            "techniques": techniques,
+        },
     )

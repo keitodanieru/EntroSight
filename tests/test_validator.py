@@ -21,7 +21,7 @@ def validator() -> FileValidator:
 
 
 class TestFileValidatorExtension:
-    """Extension allowlist checks."""
+    """Extension checks removed — validation relies on MZ signature instead."""
 
     def test_accepts_exe(self, validator: FileValidator) -> None:
         result = validator.validate("malware.exe", b"MZ" + b"\x00" * 100)
@@ -35,22 +35,19 @@ class TestFileValidatorExtension:
         result = validator.validate("driver.sys", b"MZ" + b"\x00" * 100)
         assert result.is_valid is True
 
-    def test_rejects_txt(self, validator: FileValidator) -> None:
+    def test_accepts_any_extension_with_mz(self, validator: FileValidator) -> None:
+        """Files with non-standard extensions are accepted if they have MZ signature."""
         result = validator.validate("readme.txt", b"MZ" + b"\x00" * 100)
-        assert result.is_valid is False
-        assert "Invalid file type" in result.error_message
+        assert result.is_valid is True
 
-    def test_rejects_py(self, validator: FileValidator) -> None:
-        result = validator.validate("script.py", b"MZ" + b"\x00" * 100)
-        assert result.is_valid is False
+    def test_accepts_no_extension_with_mz(self, validator: FileValidator) -> None:
+        """Extensionless files (e.g. raw samples named by hash) are accepted."""
+        result = validator.validate("noext", b"MZ" + b"\x00" * 100)
+        assert result.is_valid is True
 
     def test_case_insensitive_extension(self, validator: FileValidator) -> None:
         result = validator.validate("MALWARE.EXE", b"MZ" + b"\x00" * 100)
         assert result.is_valid is True
-
-    def test_rejects_no_extension(self, validator: FileValidator) -> None:
-        result = validator.validate("noext", b"MZ" + b"\x00" * 100)
-        assert result.is_valid is False
 
 
 class TestFileValidatorSize:
@@ -106,7 +103,7 @@ class TestFileValidatorHash:
         assert result.file_hash == expected
 
     def test_hash_is_none_on_failure(self, validator: FileValidator) -> None:
-        result = validator.validate("bad.txt", b"MZ" + b"\x00" * 100)
+        result = validator.validate("bad.txt", b"NOTMZ" + b"\x00" * 100)
         assert result.is_valid is False
         assert result.file_hash is None
 
@@ -148,10 +145,10 @@ class TestValidationCompleteness:
 
 
 class TestExtensionSignatureAlignment:
-    """**Validates: Requirements 1.2** — Property 10 (Extension-Signature Alignment).
+    """**Validates: Requirements 1.2** — Property 10 (MZ Signature Required).
 
-    For all files that pass validation, they have both a valid extension
-    AND a valid MZ signature.
+    For all files that pass validation, they must have a valid MZ signature.
+    Extension is no longer checked — the MZ header is the sole format gate.
     """
 
     @given(
@@ -159,19 +156,13 @@ class TestExtensionSignatureAlignment:
         file_bytes=st.binary(min_size=0, max_size=1024),
     )
     @settings(max_examples=200)
-    def test_valid_files_have_extension_and_signature(
+    def test_valid_files_have_mz_signature(
         self, filename: str, file_bytes: bytes
     ) -> None:
-        from pathlib import Path
-
         validator = FileValidator()
         result = validator.validate(filename, file_bytes)
 
         if result.is_valid:
-            # Must have valid extension
-            ext = Path(filename).suffix.lower()
-            assert ext in validator.ALLOWED_EXTENSIONS
-
             # Must have MZ signature
             assert len(file_bytes) >= 2
             assert file_bytes[:2] == b"MZ"

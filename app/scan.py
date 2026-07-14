@@ -184,6 +184,9 @@ async def execute_scan(
     start_time = time.perf_counter()
 
     try:
+        # Capture original file size before anything else (binary is deleted later).
+        file_size = len(file_bytes)
+
         # Step 1: Validate
         update_scan_status(scan_id, STATUS_PROCESSING, progress_stage=STAGE_VALIDATING)
         validation = components.validator.validate(filename, file_bytes)
@@ -216,14 +219,18 @@ async def execute_scan(
         # Step 4: Classify
         classification = components.classifier.classify(heatmap_tensor)
 
-        # Step 5: Retrieve context (degrade gracefully on RAG failure)
+        # Step 5: Retrieve context (degrade gracefully on RAG failure).
+        # Skip RAG entirely for "Unknown" — there's no family to look up.
         update_scan_status(scan_id, STATUS_PROCESSING, progress_stage=STAGE_EXPLAINING)
-        try:
-            passages = components.rag_engine.retrieve_context(
-                classification.predicted_label, top_k=settings.rag_top_k
-            )
-        except Exception:
+        if classification.predicted_label == "Unknown":
             passages = []
+        else:
+            try:
+                passages = components.rag_engine.retrieve_context(
+                    classification.predicted_label, top_k=settings.rag_top_k
+                )
+            except Exception:
+                passages = []
 
         # Step 6: Generate explanation
         explanation = await components.explanation_generator.generate(
@@ -249,6 +256,7 @@ async def execute_scan(
             heatmap_path=heatmap_path,
             timestamp=datetime.utcnow(),
             total_time_ms=total_time_ms,
+            file_size=file_size,
         )
 
         try:

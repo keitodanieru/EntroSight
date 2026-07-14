@@ -339,6 +339,22 @@ button { font-family: inherit; }
   margin-top: 6px;
 }
 
+.drop-zone__clear {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+  background: rgba(233, 238, 240, 0.06);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.drop-zone__clear:hover {
+  color: var(--accent);
+  border-color: var(--border-accent);
+}
+
 .drop-zone__overlay {
   position: absolute;
   inset: 0;
@@ -529,6 +545,7 @@ button { font-family: inherit; }
 
 .verdict-badge--malicious { background: rgba(229, 72, 77, 0.14); color: var(--accent); }
 .verdict-badge--benign { background: rgba(77, 182, 160, 0.14); color: var(--success); }
+.verdict-badge--unknown { background: rgba(200, 180, 60, 0.14); color: #c8b43c; }
 
 .family-name {
   font-family: var(--font-serif);
