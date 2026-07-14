@@ -862,6 +862,34 @@ button { font-family: inherit; }
   margin: 0 0 20px;
 }
 
+/* History search */
+.history-search {
+  margin: 20px 0 28px;
+}
+
+.history-search__input {
+  width: 100%;
+  max-width: 480px;
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.history-search__input::placeholder {
+  color: var(--text-faint);
+}
+
+.history-search__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.12);
+}
+
 /* ---------- Upload view (index.html aliases) ----------
    index.html uses its own class names for the upload page. These mirror the
    canonical design-system classes above so the two files stay consistent

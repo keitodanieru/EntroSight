@@ -116,6 +116,34 @@ class ScanHistoryDB:
         rows = await cursor.fetchall()
         return [self._row_to_record(row) for row in rows]
 
+    async def search(self, query: str, limit: int = 20) -> list[ScanRecord]:
+        """Search scan history by filename, SHA-256 hash, or predicted label.
+
+        Performs a case-insensitive partial match against the filename,
+        sha256, and predicted_label columns.
+
+        Args:
+            query: Search term to match against scan records.
+            limit: Maximum number of results to return.
+
+        Returns:
+            List of matching ScanRecord objects ordered by timestamp DESC.
+        """
+        assert self._db is not None, "Database not initialized. Call initialize() first."
+
+        like_pattern = f"%{query}%"
+        cursor = await self._db.execute(
+            """
+            SELECT * FROM scan_results
+            WHERE filename LIKE ? OR sha256 LIKE ? OR predicted_label LIKE ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+            """,
+            (like_pattern, like_pattern, like_pattern, limit),
+        )
+        rows = await cursor.fetchall()
+        return [self._row_to_record(row) for row in rows]
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------

@@ -133,6 +133,9 @@ def download_family_samples(
                     if sha256 in seen_hashes:
                         continue
 
+                    # Mark as attempted regardless of outcome to prevent infinite loop
+                    seen_hashes.add(sha256)
+
                     # Download the sample (comes as password-protected zip)
                     try:
                         print(f"  [downloading] {sha256[:16]}...")
@@ -192,7 +195,7 @@ def download_family_samples(
                             print(f"  Downloaded {downloaded}/{remaining}")
 
                         # Rate limit: wait between downloads to avoid throttling
-                        time.sleep(3)
+                        time.sleep(5)
 
                     except (httpx.TimeoutException, httpx.ConnectError) as e:
                         print(f"  [timeout] {e}. Retrying in 10s...")

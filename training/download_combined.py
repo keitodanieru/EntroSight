@@ -159,7 +159,7 @@ def download_family(
     # Step 2: Download from MalShare
     downloaded = 0
     not_found = 0
-    max_not_found = 50  # Stop if too many misses in a row
+    max_not_found = 200  # Allow many misses — MalShare only has ~10% of Bazaar hashes
 
     for i, sha256 in enumerate(new_hashes):
         if downloaded >= remaining:

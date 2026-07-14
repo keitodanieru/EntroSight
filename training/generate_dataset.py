@@ -152,7 +152,12 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
         unique_files: list[Path] = []
         for f in all_files:
             try:
-                file_hash = hashlib.sha256(f.read_bytes()).hexdigest()
+                try:
+                    file_bytes = f.read_bytes()
+                except OSError:
+                    with open("\\\\?\\" + str(f.resolve()), "rb") as fh:
+                        file_bytes = fh.read()
+                file_hash = hashlib.sha256(file_bytes).hexdigest()
                 if file_hash not in seen_hashes:
                     seen_hashes.add(file_hash)
                     unique_files.append(f)
@@ -189,7 +194,13 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
         train_count = 0
         for i, pe_path in enumerate(train_files):
             try:
-                file_bytes = pe_path.read_bytes()
+                try:
+                    file_bytes = pe_path.read_bytes()
+                except OSError:
+                    # Windows long path fallback
+                    with open("\\\\?\\" + str(pe_path.resolve()), "rb") as fh:
+                        file_bytes = fh.read()
+
                 if len(file_bytes) < 64:  # Skip tiny/corrupt files
                     continue
 
@@ -202,14 +213,19 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
                     print(f"  [train] {i + 1}/{len(train_files)} processed")
 
             except Exception as e:
-                print(f"  [SKIP] {pe_path.name}: {e}")
+                print(f"  [SKIP] {pe_path.name[:20]}: {e}")
                 continue
 
         # Process validation files
         val_count = 0
         for i, pe_path in enumerate(val_files):
             try:
-                file_bytes = pe_path.read_bytes()
+                try:
+                    file_bytes = pe_path.read_bytes()
+                except OSError:
+                    with open("\\\\?\\" + str(pe_path.resolve()), "rb") as fh:
+                        file_bytes = fh.read()
+
                 if len(file_bytes) < 64:
                     continue
 
@@ -222,14 +238,19 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
                     print(f"  [val] {i + 1}/{len(val_files)} processed")
 
             except Exception as e:
-                print(f"  [SKIP] {pe_path.name}: {e}")
+                print(f"  [SKIP] {pe_path.name[:20]}: {e}")
                 continue
 
         # Process test files
         test_count = 0
         for i, pe_path in enumerate(test_files):
             try:
-                file_bytes = pe_path.read_bytes()
+                try:
+                    file_bytes = pe_path.read_bytes()
+                except OSError:
+                    with open("\\\\?\\" + str(pe_path.resolve()), "rb") as fh:
+                        file_bytes = fh.read()
+
                 if len(file_bytes) < 64:
                     continue
 
@@ -242,7 +263,7 @@ def generate_dataset(raw_dir: Path, output_dir: Path, max_samples: int) -> None:
                     print(f"  [test] {i + 1}/{len(test_files)} processed")
 
             except Exception as e:
-                print(f"  [SKIP] {pe_path.name}: {e}")
+                print(f"  [SKIP] {pe_path.name[:20]}: {e}")
                 continue
 
         class_counts[label] = {"train": train_count, "val": val_count, "test": test_count}

@@ -1,0 +1,44 @@
+{# History rows partial — rendered inside #history-results by the history page
+   and returned standalone by the /api/history/search endpoint for HTMX swaps.
+
+   Expected context:
+     scans  -> list of ScanRecord objects
+#}
+{% if scans %}
+<div role="table" aria-label="Recent scans">
+  <div class="history-table__head" role="row">
+    <span class="eyebrow" role="columnheader">Sample</span>
+    <span class="eyebrow" role="columnheader">Verdict</span>
+    <span class="eyebrow" role="columnheader">Conf.</span>
+    <span class="eyebrow" role="columnheader">Analyzed</span>
+  </div>
+  {% for scan in scans %}
+  {% set is_benign = (scan.predicted_label | lower) == "benign" %}
+  <a
+    class="history-row"
+    href="/scan/{{ scan.scan_id if scan.scan_id is defined else scan.id }}"
+    role="row"
+    aria-label="Scan of {{ scan.filename }} — {{ scan.predicted_label }}, {{ (scan.confidence * 100) | round(1) }}% confidence"
+  >
+    <span class="history-hash" role="cell">{{ (scan.sha256 or "")[:16] }}…</span>
+    <span class="history-verdict" role="cell">
+      <span
+        class="history-verdict__dot"
+        style="background: {% if is_benign %}var(--success){% else %}var(--accent){% endif %}"
+        aria-hidden="true"
+      ></span>
+      <span class="history-verdict__label">{{ scan.predicted_label }}</span>
+    </span>
+    <span class="history-conf" role="cell">{{ (scan.confidence * 100) | round(1) }}%</span>
+    <span class="history-time" role="cell">
+      {{ scan.timestamp.strftime("%Y-%m-%d %H:%M") if scan.timestamp else "—" }}
+    </span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="history-empty">
+  <p class="history-empty__msg">No scans found.</p>
+  <a href="/" class="btn btn--primary" aria-label="Analyze a file">Analyze a file</a>
+</div>
+{% endif %}

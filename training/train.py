@@ -318,7 +318,6 @@ def main(args: argparse.Namespace) -> None:
 
     if device.type == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1024**3:.1f} GB")
 
     # Setup output directory
     output_dir = Path(args.output_dir)

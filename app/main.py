@@ -258,6 +258,23 @@ async def history_page(request: Request):
     )
 
 
+@app.get("/api/history/search", response_class=HTMLResponse)
+async def search_history(request: Request, q: str = ""):
+    """Search scan history and return an HTML fragment of matching rows.
+
+    Used by the HTMX search input on the history page to dynamically
+    filter results without a full page reload.
+    """
+    db: ScanHistoryDB = request.app.state.components.db
+    if q.strip():
+        scans = await db.search(query=q.strip(), limit=20)
+    else:
+        scans = await db.list_recent(limit=20)
+    return templates.TemplateResponse(
+        request, "partials/history_rows.html", {"scans": scans}
+    )
+
+
 @app.get("/scan/{scan_id}", response_class=HTMLResponse)
 async def scan_result_page(request: Request, scan_id: int):
     """Render an individual scan result page."""
