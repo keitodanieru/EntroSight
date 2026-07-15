@@ -33,11 +33,15 @@
         Accepted: PE binaries (MZ signature required) · maximum 50 MB.
       </span>
       <span id="file-selected" class="drop-zone__selected" style="display: none;"></span>
-      <button type="button" id="clear-file" class="drop-zone__clear" style="display: none;" aria-label="Clear selected file">✕ Clear</button>
       <div class="drop-zone__overlay" aria-hidden="true">
         <span class="drop-zone__overlay-label"> </span>
       </div>
     </label>
+
+    <div class="upload-actions">
+      <button type="button" id="clear-file" class="upload-clear" style="display: none;" aria-label="Clear selected file">✕ Clear</button>
+      <button type="submit" class="upload-submit" id="analyze-button" disabled>Analyze binary</button>
+    </div>
 
     <input
       type="file"
@@ -46,8 +50,6 @@
       class="visually-hidden"
       required
     />
-
-    <button type="submit" class="upload-submit" id="analyze-button" disabled>Analyze binary</button>
   </form>
 
   <ol class="pipeline-grid" aria-label="Analysis pipeline steps">
@@ -86,12 +88,14 @@
   // hidden <input>. Styling lives in style.css (.drop-zone--dragging); this only
   // wires native drag events, since HTMX cannot capture dropped files on its own.
   (function () {
+    var uploadForm = document.getElementById("upload-form");
     var dropZone = document.getElementById("drop-zone");
     var fileInput = document.getElementById("file-input");
     var analyzeButton = document.getElementById("analyze-button");
     var fileSelected = document.getElementById("file-selected");
     var clearButton = document.getElementById("clear-file");
-    if (!dropZone || !fileInput || !analyzeButton) return;
+    var pipelineGrid = document.querySelector(".pipeline-grid");
+    if (!uploadForm || !dropZone || !fileInput || !analyzeButton) return;
 
     function stop(e) {
       e.preventDefault();
@@ -121,6 +125,12 @@
       fileInput.value = "";
       updateFileDisplay();
     }
+
+    // Hide the upload form and pipeline grid once the scan is submitted
+    uploadForm.addEventListener("htmx:afterRequest", function () {
+      uploadForm.style.display = "none";
+      if (pipelineGrid) pipelineGrid.style.display = "none";
+    });
 
     // Show selected file when user picks via file dialog
     fileInput.addEventListener("change", updateFileDisplay);

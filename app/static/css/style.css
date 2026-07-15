@@ -339,18 +339,24 @@ button { font-family: inherit; }
   margin-top: 6px;
 }
 
-.drop-zone__clear {
+.upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.upload-clear {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-faint);
   background: rgba(233, 238, 240, 0.06);
   border: 1px solid var(--border);
-  padding: 4px 10px;
-  margin-top: 6px;
+  padding: 6px 14px;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.drop-zone__clear:hover {
+.upload-clear:hover {
   color: var(--accent);
   border-color: var(--border-accent);
 }
